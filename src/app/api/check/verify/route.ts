@@ -13,6 +13,8 @@ export async function POST(request: Request) {
     if (!room?.active || (auth.profile.role === "checker" && room.checker_id !== auth.user.id)) return Response.json({ error: "This room is not assigned to this checker" }, { status: 403 });
     const { data: event } = await auth.supabase.from("check_events").select("id, closed_at").eq("id", body.eventId).single();
     if (!event || event.closed_at) return Response.json({ error: "Room check session is not open" }, { status: 409 });
+    const { data: assignment } = await auth.supabase.from("room_assignments").select("id").eq("student_id", payload.sub).eq("room_id", body.roomId).eq("active", true).maybeSingle();
+    if (!assignment) return Response.json({ error: "Student is no longer assigned to this room" }, { status: 409 });
     const { data, error } = await auth.supabase.from("verifications").upsert({ event_id: body.eventId, student_id: payload.sub, checker_id: auth.user.id, room_id: body.roomId, method: "qr", status: "verified", verified_at: new Date().toISOString() }, { onConflict: "event_id,student_id" }).select("id, verified_at").single();
     if (error) throw error;
     return Response.json({ verification: data, studentId: payload.sub });

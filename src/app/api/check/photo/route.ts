@@ -16,6 +16,12 @@ export async function POST(request: Request) {
     if (!(photo instanceof File) || !allowedTypes.has(photo.type) || photo.size > 5_000_000) return Response.json({ error: "Upload a JPG, PNG or WebP photo under 5 MB" }, { status: 400 });
     const { data: room } = await auth.supabase.from("rooms").select("checker_id, active").eq("id", roomId).single();
     if (!room?.active || (auth.profile.role === "checker" && room.checker_id !== auth.user.id)) return Response.json({ error: "This room is not assigned to this checker" }, { status: 403 });
+    const [{ data: event }, { data: assignment }] = await Promise.all([
+      auth.supabase.from("check_events").select("id, closed_at").eq("id", eventId).maybeSingle(),
+      auth.supabase.from("room_assignments").select("id").eq("student_id", studentId).eq("room_id", roomId).eq("active", true).maybeSingle(),
+    ]);
+    if (!event || event.closed_at) return Response.json({ error: "Room check session is not open" }, { status: 409 });
+    if (!assignment) return Response.json({ error: "Student is not assigned to this room" }, { status: 409 });
     const path = `${eventId}/${roomId}/${studentId}-${randomUUID()}.${photo.type.split("/")[1]}`;
     const { error: uploadError } = await auth.supabase.storage.from("room-check-photos").upload(path, photo, { contentType: photo.type, upsert: false });
     if (uploadError) throw uploadError;

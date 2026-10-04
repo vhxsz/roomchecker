@@ -1,5 +1,5 @@
 "use client";
 
-import { StudentPortal } from "../page";
 import { RoleGate } from "@/components/role-gate";
-export default function StudentPage(){ return <RoleGate allowed={["student"]}>{(logout)=><StudentPortal onLogout={logout}/>}</RoleGate> }
+import { StudentLive } from "@/components/student-live";
+export default function StudentPage(){ return <RoleGate allowed={["student"]}>{(logout)=><StudentLive onLogout={logout}/>}</RoleGate> }

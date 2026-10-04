@@ -37,8 +37,7 @@ create table public.room_assignments (
   room_id uuid not null references public.rooms(id) on delete cascade,
   student_id uuid not null references public.profiles(id) on delete cascade,
   active boolean not null default true,
-  assigned_at timestamptz not null default now(),
-  unique (student_id, active)
+  assigned_at timestamptz not null default now()
 );
 
 create table public.check_templates (
@@ -139,7 +138,9 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
 
 create index room_assignments_student_active_idx on public.room_assignments(student_id, active);
+create unique index room_assignments_one_active_student_idx on public.room_assignments(student_id) where active = true;
 create index rooms_checker_idx on public.rooms(checker_id);
 create index check_events_schedule_idx on public.check_events(scheduled_for desc);
+create unique index check_events_only_one_open_idx on public.check_events ((true)) where closed_at is null;
 create index verifications_event_status_idx on public.verifications(event_id, status);
 create index audit_logs_created_idx on public.audit_logs(created_at desc);

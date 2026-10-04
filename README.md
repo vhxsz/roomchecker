@@ -9,7 +9,9 @@ Production-ready room verification system for Kingsway College residences. Stude
 - 30-second server-signed student QR credentials.
 - Server validation of student, room, checker and active check event.
 - Private photo evidence with mandatory Dean review.
-- Student directory, room/floor assignments, schedules and reporting UI.
+- Dean-managed students, checkers, floors, rooms, assignments and schedules.
+- Daily, weekly, monthly and yearly reports with CSV export.
+- Account registration, invitation and password recovery flows.
 - Responsive mobile experiences for students and checkers.
 - PostgreSQL schema, RLS policies, storage policies and starter schedules.
 - Vercel-compatible Next.js application.
@@ -36,7 +38,9 @@ In Authentication → URL Configuration:
 
 - Site URL: `http://localhost:3000` during local development.
 - Redirect URL: `http://localhost:3000/auth/callback`.
+- Password recovery URL: `http://localhost:3000/reset-password`.
 - Add the final production callback after deployment: `https://YOUR_DOMAIN/auth/callback`.
+- Add the final production recovery URL: `https://YOUR_DOMAIN/reset-password`.
 
 Enable the Google provider and use the callback URL shown by Supabase in the Google Cloud OAuth client. Email/password authentication can remain enabled for personal-email access.
 
