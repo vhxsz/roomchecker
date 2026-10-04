@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     ]);
     const failed = [profiles, floors, rooms, assignments, templates, events, verifications].find(result => result.error);
     if (failed?.error) throw failed.error;
-    return Response.json({ profiles: profiles.data, floors: floors.data, rooms: rooms.data, assignments: assignments.data, templates: templates.data, events: events.data, verifications: verifications.data });
+    return Response.json({ viewerId: auth.user.id, profiles: profiles.data, floors: floors.data, rooms: rooms.data, assignments: assignments.data, templates: templates.data, events: events.data, verifications: verifications.data });
   } catch (error) {
     console.error("Admin bootstrap failed", error);
     return Response.json({ error: "Administrative data is temporarily unavailable" }, { status: 500 });
