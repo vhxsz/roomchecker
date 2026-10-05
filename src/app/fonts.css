@@ -1,0 +1,28 @@
+:root {
+  --font-body: var(--font-league-spartan);
+  --font-display: var(--font-league-spartan);
+}
+
+html,
+body,
+body * {
+  font-family: var(--font-league-spartan), Arial, sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+.brand strong,
+.login-brand > span,
+.login-seal,
+.crest {
+  letter-spacing: -0.025em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
