@@ -162,3 +162,34 @@ test('Mobile Dean can sign out and use the user management table',async({page})=
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
  await page.screenshot({path:'test-results/dean-mobile.png',fullPage:true});
 });
+test('Dean dashboard links, explicit assignments and readable schedule controls',async({page})=>{
+ await session(page);
+ const actions:Record<string,unknown>[]=[];
+ await page.route('**/api/admin/manage',async route=>{actions.push(route.request().postDataJSON());await route.fulfill({json:{data:{id:'assignment'}}});});
+ await page.goto('/admin');
+ await page.getByRole('button',{name:'Assigned residents 1',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'Room Assignments',exact:true})).toBeVisible();
+ await page.getByRole('row').filter({hasText:'Dean Morgan'}).getByRole('button',{name:'Assign room',exact:true}).click();
+ await page.getByLabel('Destination room').selectOption('r1');
+ await page.getByRole('button',{name:'Save resident assignment'}).click();
+ await expect.poll(()=>actions.length).toBe(1);
+ expect(actions[0]).toMatchObject({action:'assign_student',studentId:dean.id,roomId:'r1'});
+ await page.getByRole('button',{name:'Checker Coverage',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Assign checker rooms',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Occupancy',exact:true}).click();
+ await expect(page.getByText('1 / 2 beds occupied')).toBeVisible();
+ await page.getByRole('button',{name:'Live check',exact:true}).click();
+ const schedule=page.getByLabel('Room check schedule');
+ await expect(schedule).toHaveCSS('color','rgb(23, 35, 31)');
+ await expect(schedule).toHaveCSS('background-color','rgb(255, 255, 255)');
+ await expect(schedule.locator('option').first()).toHaveCSS('color','rgb(23, 35, 31)');
+});
+
+test('Bootstrap errors do not display misleading zero counts',async({page})=>{
+ await session(page);
+ await page.route('**/api/admin/bootstrap',route=>route.fulfill({status:500,json:{error:'Administrative data is temporarily unavailable'}}));
+ await page.goto('/admin');
+ await expect(page.getByRole('heading',{name:'Residence data could not be loaded'})).toBeVisible();
+ await expect(page.locator('.live-stats')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Retry loading'})).toBeVisible();
+});

@@ -15,7 +15,7 @@ export async function POST(request:Request){
   const residentActions=new Set(["assign_student","remove_assignment"]);
   if(residentActions.has(body.action)){
    const{data,error}=await auth.supabase.rpc("resident_assignment_operation",{p_actor:auth.user.id,p_action:body.action,p_body:body});
-   if(error)return Response.json({error:error.code==="PGRST202"?"Database upgrade required: run the Dean resident testing migration":error.message},{status:409});
+   if(error)return Response.json({error:error.code==="PGRST202"?"Room assignments are unavailable: apply supabase/migrations/20261006_dean_resident_testing.sql in the Supabase SQL Editor, then retry.":error.message},{status:409});
    return Response.json({data});
   }
   const transactionalActions=new Set(["set_role","set_checker_rooms","open_event","close_event"]);
