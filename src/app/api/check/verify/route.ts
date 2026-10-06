@@ -15,8 +15,8 @@ export async function POST(request: Request) {
     if (!event || event.closed_at) return Response.json({ error: "Room check session is not open" }, { status: 409 });
     const { data: assignment } = await auth.supabase.from("room_assignments").select("id").eq("student_id", payload.sub).eq("room_id", body.roomId).eq("active", true).maybeSingle();
     if (!assignment) return Response.json({ error: "Student is no longer assigned to this room" }, { status: 409 });
-    const { data, error } = await auth.supabase.from("verifications").upsert({ event_id: body.eventId, student_id: payload.sub, checker_id: auth.user.id, room_id: body.roomId, method: "qr", status: "verified", verified_at: new Date().toISOString() }, { onConflict: "event_id,student_id" }).select("id, verified_at").single();
-    if (error) throw error;
+    const { data, error } = await auth.supabase.rpc("record_room_check", {p_actor:auth.user.id,p_student:payload.sub,p_room:body.roomId,p_event:body.eventId,p_method:"qr"});
+    if (error)return Response.json({error:error.message},{status:409});
     return Response.json({ verification: data, studentId: payload.sub });
   } catch (error) {
     console.error("QR verification failed", error);

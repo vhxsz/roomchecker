@@ -18,12 +18,18 @@ export function createStudentQrToken(payload: StudentQrPayload) {
 }
 
 export function verifyStudentQrToken(token: string): StudentQrPayload | null {
-  const [encoded, signature] = token.split(".");
+ try {
+  if(token.length>4096)return null;
+  const parts=token.split(".");
+  if(parts.length!==2)return null;
+  const [encoded, signature] = parts;
   if (!encoded || !signature) return null;
   const expected = Buffer.from(sign(encoded));
   const received = Buffer.from(signature);
   if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null;
   const payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as StudentQrPayload;
-  if (!payload.sub || !payload.roomId || payload.exp < Math.floor(Date.now() / 1000)) return null;
+  const now=Math.floor(Date.now()/1000);
+  if (typeof payload.sub!=="string" || typeof payload.roomId!=="string" || !payload.sub || !payload.roomId || !Number.isInteger(payload.exp) || !Number.isInteger(payload.iat) || payload.exp<=now || payload.iat>now+5 || payload.exp-payload.iat>30 || payload.exp<=payload.iat) return null;
   return payload;
+ }catch{return null;}
 }

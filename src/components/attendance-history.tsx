@@ -1,0 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/auth-fetch";
+type Record={id:string;status:string;method:string;verified_at:string;check_events:{scheduled_for:string;check_templates:{name:string}|null}|null;rooms:{room_number:string}|null};
+export function AttendanceHistory(){const[records,setRecords]=useState<Record[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);useEffect(()=>{authFetch("/api/student/history").then(d=>setRecords(d.records)).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[]);return <section className="live-panel"><h2>Your attendance history</h2><p>Latest 30 records. Photo exceptions count as present only after Dean approval.</p>{error&&<p role="alert">{error}</p>}{loading?<p>Loading history…</p>:!records.length?<p>No checks recorded yet.</p>:records.map(r=><div className="report-row" key={r.id}><div><strong>{r.check_events?.check_templates?.name||"Room check"}</strong><span>{new Date(r.check_events?.scheduled_for||r.verified_at).toLocaleString()} · Room {r.rooms?.room_number}</span></div><b>{r.status.replaceAll("_"," ")}</b></div>)}</section>}

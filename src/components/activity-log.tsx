@@ -1,0 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
+import { authFetch } from "@/lib/auth-fetch";
+type Entry={id:number;action:string;entity_id:string|null;metadata:Record<string,unknown>;created_at:string;profiles:{full_name:string}|null};
+export function ActivityLog(){const[logs,setLogs]=useState<Entry[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(true);useEffect(()=>{authFetch("/api/admin/activity").then(d=>setLogs(d.logs)).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[]);return <section className="live-panel"><h2>Administrative activity</h2><p>Latest 200 changes and room verifications.</p>{error&&<p role="alert">{error}</p>}{loading?<p>Loading activity…</p>:!logs.length?<p>No activity recorded.</p>:logs.map(l=><div className="report-row" key={l.id}><div><strong>{l.action.replaceAll("_"," ")}</strong><span>{l.profiles?.full_name||"Former user"} · {new Date(l.created_at).toLocaleString()}</span><small>{l.entity_id}</small></div><details><summary>Details</summary><pre>{JSON.stringify(l.metadata,null,2)}</pre></details></div>)}</section>}
