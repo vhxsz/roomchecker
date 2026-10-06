@@ -85,7 +85,7 @@ Never expose `SUPABASE_SERVICE_ROLE_KEY` in a `NEXT_PUBLIC_` variable. After the
 
 ## Upgrading an existing database
 
-Run the unapplied migrations in order: `supabase/migrations/20261005_residence_operations.sql`, then `supabase/migrations/20261005_school_google_only.sql`. Do not rerun `schema.sql` or erase existing student data. The migration runs in one transaction and does not remove student records. Apply it before deploying this version: the app deliberately refuses to fall back to non-transactional role/assignment writes if the migration is missing.
+Run the unapplied migrations in order: `supabase/migrations/20261005_residence_operations.sql`, `supabase/migrations/20261005_school_google_only.sql`, then `supabase/migrations/20261006_dean_resident_testing.sql`. Do not rerun `schema.sql` or erase existing student data. The migration runs in one transaction and does not remove student records. Apply it before deploying this version: the app deliberately refuses to fall back to non-transactional role/assignment writes if the migration is missing.
 
 Important behavior:
 
@@ -110,6 +110,6 @@ npm run build
 
 `npm test` uses an isolated PostgreSQL-compatible PGlite database to execute the schema, migration and permission/transaction tests. Authentication/storage schemas are test stubs. `npm run test:e2e` runs Chrome against a separate local dev server on port 3100 and mocks the Supabase/API responses to test UI interactions; it never writes to production. Install Google Chrome or adjust the Playwright channel for your machine. These tests do not replace live Supabase/Auth/Storage and two-device camera testing.
 
-Before live use: configure the two Supabase keys locally and in Vercel, apply both SQL migrations, enable Google and disable alternative providers, configure redirects, and test school/personal Google accounts, QR scanning with two phones, upload/review and exports against the real project. Never paste a service-role key into a public message or commit it.
+Before live use: configure the two Supabase keys locally and in Vercel, apply all SQL migrations, enable Google and disable alternative providers, configure redirects, and test school/personal Google accounts, QR scanning with two phones, upload/review and exports against the real project. Never paste a service-role key into a public message or commit it.
 
 Research informing the residence features: [eRezLife assignments](https://erezlife.com/assignments/) (occupancy and room changes) and [room condition reporting](https://erezlife.com/room-condition-reporting/) (maintenance/work orders).

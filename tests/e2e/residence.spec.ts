@@ -69,6 +69,22 @@ test('Dean edits a schedule and a room without creating duplicates',async({page}
  expect(actions[1]).toMatchObject({action:'update_room',id:'r1',capacity:'3'});
 });
 
+test('Dean sees their own resident account, assigns a room and opens My QR',async({page})=>{
+ await session(page);const actions:Record<string,unknown>[]=[];
+ await page.route('**/api/admin/manage',async route=>{actions.push(route.request().postDataJSON());await route.fulfill({json:{data:{id:'a-dean'}}});});
+ await page.goto('/admin');
+ await expect(page.getByText('Accounts').locator('..')).toContainText('3');
+ await page.getByRole('button',{name:'Students',exact:true}).click();
+ const deanRow=page.getByRole('row').filter({hasText:'Dean Morgan (You)'});
+ await expect(deanRow).toBeVisible();await deanRow.locator('select').selectOption('r1');
+ await expect.poll(()=>actions.length).toBe(1);
+ expect(actions[0]).toMatchObject({action:'assign_student',studentId:dean.id,roomId:'r1'});
+ await page.route('**/api/student/qr',route=>route.fulfill({json:{token:'dean-test-qr',roomNumber:'101',roomId:'r1',expiresAt:Math.floor(Date.now()/1000)+30}}));
+ await page.route('**/api/student/history',route=>route.fulfill({json:{records:[]}}));
+ await page.getByRole('link',{name:'My QR'}).click();await expect(page).toHaveURL('/student');
+ await expect(page.locator('canvas')).toBeVisible();await expect(page.getByRole('link',{name:'Dean dashboard'})).toBeVisible();
+});
+
 test('Maintenance requests submit and the Dean resolves them',async({page})=>{
  await session(page);let submitted:Record<string,unknown>;let resolved=false;
  await page.route('**/api/residence/requests',async route=>{

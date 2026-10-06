@@ -2,4 +2,4 @@
 
 import { RoleGate } from "@/components/role-gate";
 import { StudentLive } from "@/components/student-live";
-export default function StudentPage(){ return <RoleGate allowed={["student","checker"]}>{(logout)=><StudentLive onLogout={logout}/>}</RoleGate> }
+export default function StudentPage(){ return <RoleGate allowed={["student","checker","dean"]}>{(logout)=><StudentLive onLogout={logout}/>}</RoleGate> }

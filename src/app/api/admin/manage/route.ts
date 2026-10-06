@@ -12,7 +12,13 @@ export async function POST(request:Request){
   const body=await request.json() as ActionBody;
   let result:unknown;
 
-  const transactionalActions=new Set(["set_role","set_checker_rooms","assign_student","remove_assignment","open_event","close_event"]);
+  const residentActions=new Set(["assign_student","remove_assignment"]);
+  if(residentActions.has(body.action)){
+   const{data,error}=await auth.supabase.rpc("resident_assignment_operation",{p_actor:auth.user.id,p_action:body.action,p_body:body});
+   if(error)return Response.json({error:error.code==="PGRST202"?"Database upgrade required: run the Dean resident testing migration":error.message},{status:409});
+   return Response.json({data});
+  }
+  const transactionalActions=new Set(["set_role","set_checker_rooms","open_event","close_event"]);
   if(transactionalActions.has(body.action)){
    if(body.action==="set_role"&&!roles.has(text(body.role) as Role))return Response.json({error:"Invalid role"},{status:400});
    if(body.action==="set_checker_rooms"&&!Array.isArray(body.roomIds))return Response.json({error:"Room selection is required"},{status:400});

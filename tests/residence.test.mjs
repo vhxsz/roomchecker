@@ -17,6 +17,7 @@ test('Residence database permissions and transactional workflows',async t=>{
   const schema=await readFile(new URL('../supabase/schema.sql',import.meta.url),'utf8');
   await db.exec(schema.replace('create extension if not exists "pgcrypto";',''));
   await db.exec(await readFile(new URL('../supabase/migrations/20261005_residence_operations.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261006_dean_resident_testing.sql',import.meta.url),'utf8'));
   const dean=randomUUID(),checker=randomUUID(),student=randomUUID(),other=randomUUID(),floor=randomUUID(),roomA=randomUUID(),roomB=randomUUID(),template=randomUUID();
   for(const[id,role]of [[dean,'dean'],[checker,'checker'],[student,'student'],[other,'student']]){
    await db.query('insert into auth.users(id,email) values($1,$2)',[id,`${role}-${id}@test.school`]);
@@ -25,15 +26,20 @@ test('Residence database permissions and transactional workflows',async t=>{
   await db.query("insert into floors(id,hall,floor_number,label) values($1,'North',1,'First')",[floor]);
   await db.query("insert into rooms(id,floor_id,room_number,capacity) values($1,$3,'101',1),($2,$3,'102',2)",[roomA,roomB,floor]);
   await db.query("insert into check_templates(id,name,check_time) values($1,'Night','22:00')",[template]);
-  const op=async(actor,action,body)=>(await db.query('select residence_operation($1,$2,$3::jsonb) as result',[actor,action,JSON.stringify(body)])).rows[0].result;
+  const op=async(actor,action,body)=>{
+   const fn=['assign_student','remove_assignment'].includes(action)?'resident_assignment_operation':'residence_operation';
+   return (await db.query(`select ${fn}($1,$2,$3::jsonb) as result`,[actor,action,JSON.stringify(body)])).rows[0].result;
+  };
   const record=async(actor,who,room,event,method='qr')=>(await db.query('select record_room_check($1,$2,$3,$4,$5,$6,null) as result',[actor,who,room,event,method,method==='photo'?'test/photo.jpg':null])).rows[0].result;
 
   await t.test('Dean assigns students, transfers atomically, prevents overcapacity',async()=>{
    await op(dean,'assign_student',{studentId:student,roomId:roomA});
    await op(dean,'assign_student',{studentId:other,roomId:roomB});
+   await op(dean,'assign_student',{studentId:dean,roomId:roomB});
    await assert.rejects(op(dean,'assign_student',{studentId:other,roomId:roomA}),/available beds/);
    const rows=(await db.query('select room_id from room_assignments where student_id=$1 and active',[other])).rows;
    assert.equal(rows.length,1);assert.equal(rows[0].room_id,roomB);
+   assert.equal((await db.query('select room_id from room_assignments where student_id=$1 and active',[dean])).rows[0].room_id,roomB);
    await op(dean,'assign_student',{studentId:student,roomId:roomA}); // idempotent
   });
   await t.test('Promoting a resident preserves their room; students cannot promote users',async()=>{
