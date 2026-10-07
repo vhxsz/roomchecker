@@ -146,6 +146,21 @@ test('Home offers only school Google authentication; old password pages redirect
  await expect(page.getByRole('button',{name:'Student demo',exact:true})).toBeVisible();
 });
 
+test('Dean demo uses the three real dorm floors and unique checker assignments',async({page})=>{
+ await page.goto('/');
+ await page.getByRole('button',{name:'Dean demo',exact:true}).click();
+ await expect(page.getByText('90 of 98 students verified across 3 floors.')).toBeVisible();
+ await page.getByRole('button',{name:'Rooms',exact:true}).click();
+ await expect(page.getByText('B-214 · Sarah Collins',{exact:true})).toBeVisible();
+ await expect(page.getByText('B-216 · James Wilson',{exact:true})).toBeVisible();
+ await expect(page.getByText('G-308 · Maya Thompson',{exact:true})).toBeVisible();
+ await expect(page.getByText('Sarah Collins',{exact:false})).toHaveCount(1);
+ await page.getByRole('button',{name:'Live check',exact:true}).click();
+ await expect(page.getByText('Boys Dorm · Floor One · 100%',{exact:true})).toBeVisible();
+ await expect(page.getByText('Boys Dorm · Floor Two · 92%',{exact:true})).toBeVisible();
+ await expect(page.getByText('Girls Dorm · Floor Three · 86%',{exact:true})).toBeVisible();
+});
+
 test('Personal Google accounts are signed out and refused by the callback',async({page})=>{
  await session(page,'student');
  await page.route('https://roomchecker-test.supabase.co/auth/v1/user',route=>route.fulfill({json:{id:student.id,email:'alex@gmail.com',identities:[{provider:'google',identity_data:{email:'alex@gmail.com',email_verified:true}}],app_metadata:{provider:'google'},user_metadata:{}}}));
